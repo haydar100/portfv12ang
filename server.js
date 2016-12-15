@@ -2,9 +2,11 @@ var express = require('express');
 var bodyParser = require('body-parser');
 var app = express();
 var mongoose   = require('mongoose');
+var cors = require('cors');
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
+app.use(cors());
 
 var port = process.env.PORT || 3000;
 
@@ -34,14 +36,14 @@ router.route('/images')
         
         image.base64 = req.body.base64;  // set the image base64 (comes from the request)
         image.description = req.body.description;
-        // save the bear and check for errors
+
         image.save(function(err) {
             if (err)
                 res.send(err);
 
             res.json({ message: 'Image saved!' });
         });
-        
+
     })
       .get(function(req, res) {
         Image.find(function(err, images) {
@@ -52,10 +54,21 @@ router.route('/images')
         });
     });
 
- 
+
+ 	router.route('/images/:image_id')
+      .delete(function(req, res) {
+        Image.findOneAndRemove({
+            _id: req.params.image_id
+        }, function(err, images) {
+            if (err)
+                res.send(err);
+            res.json({ message: 'deleted image with id ' + req.params.image_id });
+        });
+    });
+        
 
 app.use('/api', router);
 
 
 app.listen(port);
-console.log('Magic happens on port ' + port);
+console.log('Server listing to port ' + port);

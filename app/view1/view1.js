@@ -9,6 +9,18 @@ angular.module('portfvangular.view1', ['ngRoute'])
   });
 }])
 
-.controller('View1Ctrl', [function() {
+.controller('View1Ctrl', ['Images', '$scope', function(Images, $scope) {
+	 Images.get()
+            .success(function(data) {
+                $scope.images = data;
+            });
+
+     $scope.getImage = function(data){
+    	return 'data:image/jpeg;base64,' + data;
+	}
+
+	$scope.deleteImage = function(id) {
+		// todo build delete function
+	}
 
 }]);

@@ -5,7 +5,8 @@ angular.module('portfvangular', [
   'ngRoute',
   'portfvangular.view1',
   'portfvangular.view2',
-  'portfvangular.version'
+  'portfvangular.version',
+  'imageService'
 ]).
 config(['$locationProvider', '$routeProvider', function($locationProvider, $routeProvider) {
   $locationProvider.hashPrefix('!');

@@ -33,6 +33,7 @@
   },
   "dependencies": {
     "body-parser": "^1.15.2",
-    "bootstrap": "^3.3.7"
+    "bootstrap": "^3.3.7",
+    "cors": "^2.8.1"
   }
 }

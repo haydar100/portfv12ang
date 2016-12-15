@@ -1,1 +1,8 @@
-<p>This is the partial for view 1.</p>
+<table>
+	<tr ng-repeat="image in images">
+		<td ng-show="image.base64">
+			<img data-ng-src="{{getImage(image.base64)}}" />
+			<span>{{image.description}}</span>
+		</td>
+	</tr>
+</table>
