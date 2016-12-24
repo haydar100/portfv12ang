@@ -1,5 +1,3 @@
-'use strict';
-
 angular.module('portfvangular.view1', ['ngRoute'])
 
 .config(['$routeProvider', function($routeProvider) {
@@ -9,18 +7,29 @@ angular.module('portfvangular.view1', ['ngRoute'])
   });
 }])
 
-.controller('View1Ctrl', ['Images', '$scope', function(Images, $scope) {
-	 Images.get()
-            .success(function(data) {
-                $scope.images = data;
-            });
+.controller('View1Ctrl', ['imageService', '$scope', '$http', function(imageService, $scope, $http) {
+	 $scope.files = [];
+	 $scope.uploadFile = function(){
+        var file = $scope.uploadedFile;
+        var uploadUrl = "http://localhost:3000/api/uploads";
+        imageService.uploadFileToUrl(file, uploadUrl).then(function(file) {
+       	 $scope.files.push(file);
+        });
+    };
 
-     $scope.getImage = function(data){
-    	return 'data:image/jpeg;base64,' + data;
-	}
+    $scope.getFiles = function() {
+    	imageService.getUploadedFiles().then(function(files) {
+    		$scope.files = files;
+    	});
+    };
 
-	$scope.deleteImage = function(id) {
-		// todo build delete function
-	}
+    $scope.deleteFile = function(file) {
+    	imageService.deleteFile(file).then(function() {
+    		var index = $scope.files.indexOf(file);
+  			$scope.files.splice(index, 1);
+    	});
+    }
 
+    $scope.getFiles();
 }]);
+

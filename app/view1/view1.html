@@ -1,8 +1,9 @@
-<table>
-	<tr ng-repeat="image in images">
-		<td ng-show="image.base64">
-			<img data-ng-src="{{getImage(image.base64)}}" />
-			<span>{{image.description}}</span>
-		</td>
-	</tr>
-</table>
+<input type="file" file-model="uploadedFile" accept="image/*"/><br><br>
+<button ng-click="uploadFile()">Upload</button>
+<div>
+	<li ng-repeat="image in files">
+		<h3>{{image.filename}}</h3>
+		<img ng-src="{{image.path}}"/>
+		<button ng-click="deleteFile(image)">Delete</button>
+	</li>
+</div>

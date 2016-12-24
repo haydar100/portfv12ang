@@ -6,10 +6,10 @@ angular.module('portfvangular', [
   'portfvangular.view1',
   'portfvangular.view2',
   'portfvangular.version',
-  'imageService'
+  'imageService',
+  'fileModel'
 ]).
 config(['$locationProvider', '$routeProvider', function($locationProvider, $routeProvider) {
   $locationProvider.hashPrefix('!');
-
   $routeProvider.otherwise({redirectTo: '/view1'});
 }]);
