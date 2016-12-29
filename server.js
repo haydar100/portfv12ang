@@ -1,15 +1,21 @@
 var express = require('express');
 var bodyParser = require('body-parser');
 var app = express();
-var mongoose   = require('mongoose');
+var mongoose  = require('mongoose');
 var cors = require('cors');
 var multer = require('multer')
 var fs = require('fs');
+var passport = require('passport');
+var morgan = require('morgan');
+var jwt = require('jwt-simple');
+var config = require('./app/config/database');
+console.log(config);
 
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cors());
+app.use(passport.initialize());
 
 var port = process.env.PORT || 3000;
 
@@ -20,7 +26,6 @@ var storage = multer.diskStorage({
         callback(null, './app/uploads/');
     },
     filename: function (request, file, callback) {
-        console.log('haydar');
         callback(null, file.originalname);
     }
 	
@@ -33,9 +38,12 @@ var upload = multer({ storage: storage, fileFilter: function (req, file, cb) {
     cb(null, true);
   }});
 
-mongoose.connect('mongodb://localhost/portfv12ang'); 
+mongoose.connect(config.database);
+require('./app/config/passport')(passport);
+
 
 var File = require('./app/models/file');
+var User = require('./app/models/user');
 
 router.use(function(req, res, next) {
     // do logging
@@ -65,8 +73,6 @@ router.post('/uploads', upload.single('file'), function (req, res) {
 		if (err) {
 			res.send(err);
 		} else {
-		    console.log(req); // form fields
-		    console.log(req); // form files
 		    res.json(file);
 		}
 	})
@@ -100,46 +106,84 @@ router.get('/files', function (req, res) {
 	
 });
 
-/*// IMAGE API
-router.route('/images')
-
-    // create a image (accessed at POST http://localhost:8080/api/images)
-    .post(function(req, res) {
-        
-        var image = new Image();      // create a new instance of the image model
-        
-        image.base64 = req.body.base64;  // set the image base64 (comes from the request)
-        image.description = req.body.description;
-
-        image.save(function(err) {
-            if (err)
-                res.send(err);
-
-            res.json({ message: 'Image saved!' });
-        });
-
-    })
-      .get(function(req, res) {
-        Image.find(function(err, images) {
-            if (err)
-                res.send(err);
-
-            res.json(images);
-        });
+router.post('/signup', function(req, res) {
+  if (!req.body.name || !req.body.password) {
+    res.json({success: false, msg: 'Please pass name and password.'});
+  } else {
+    var newUser = new User({
+      name: req.body.name,
+      password: req.body.password
     });
+    // save the user
+    newUser.save(function(err) {
+      if (err) {
+        return res.json({success: false, msg: 'Username already exists.'});
+      }
+      res.json({success: true, msg: 'Successful created new user.'});
+    });
+  }
+});
 
 
- 	router.route('/images/:image_id')
-      .delete(function(req, res) {
-        Image.findOneAndRemove({
-            _id: req.params.image_id
-        }, function(err, images) {
-            if (err)
-                res.send(err);
-            res.json({ message: 'deleted image with id ' + req.params.image_id });
-        });
-    });*/
-  
+router.post('/authenticate', function(req, res) {
+  User.findOne({
+    name: req.body.name
+  }, function(err, user) {
+    if (err) throw err;
+ 
+    if (!user) {
+      res.send({success: false, msg: 'Authentication failed. User not found.'});
+    } else {
+      // check if password matches
+      user.comparePassword(req.body.password, function (err, isMatch) {
+        if (isMatch && !err) {
+          // if user is found and password is right create a token
+          var token = jwt.encode(user, config.secret);
+          // return the information including token as JSON
+          res.json({success: true, token: 'JWT ' + token});
+        } else {
+          res.send({success: false, msg: 'Authentication failed. Wrong password.'});
+        }
+      });
+    }
+  });
+});
+
+
+router.get('/memberinfo', passport.authenticate('jwt', { session: false}), function(req, res) {
+  var token = getToken(req.headers);
+  if (token) {
+    var decoded = jwt.decode(token, config.secret);
+    User.findOne({
+      name: decoded.name
+    }, function(err, user) {
+        if (err) throw err;
+ 
+        if (!user) {
+          return res.status(403).send({success: false, msg: 'Authentication failed. User not found.'});
+        } else {
+          res.json({success: true, msg: 'Welcome in the member area ' + user.name + '!'});
+        }
+    });
+  } else {
+    return res.status(403).send({success: false, msg: 'No token provided.'});
+  }
+});
+ 
+getToken = function (headers) {
+  if (headers && headers.authorization) {
+    var parted = headers.authorization.split(' ');
+    if (parted.length === 2) {
+      return parted[1];
+    } else {
+      return null;
+    }
+  } else {
+    return null;
+  }
+};
+
+
 
 app.use('/api', router);
 
